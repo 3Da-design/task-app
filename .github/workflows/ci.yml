@@ -35,7 +35,18 @@ jobs:
         run: php artisan migrate --env=testing
 
       - name: Run PHPStan
-        run: ./vendor/bin/phpstan analyse app --level=5
+        run: ./vendor/bin/phpstan analyse
 
       - name: Run PHPUnit
         run: php artisan test
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Postman tests
+        run: newman run postman_collections.json
