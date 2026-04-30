@@ -28,6 +28,9 @@ jobs:
       - name: Copy .env
         run: cp .env.example .env
 
+      - name: Generate Key (.env)
+        run: php artisan key:generate
+
       - name: Generate Key
         run: php artisan key:generate --env=testing
 
@@ -48,8 +51,13 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
 
+      - name: Prepare SQLite DB for Newman
+        run: |
+          touch database/newman.sqlite
+          DB_CONNECTION=sqlite DB_DATABASE=${{ github.workspace }}/database/newman.sqlite php artisan migrate --force
+
       - name: Start Laravel server
-        run: php artisan serve --host=127.0.0.1 --port=8000 > /tmp/laravel.log 2>&1 &
+        run: DB_CONNECTION=sqlite DB_DATABASE=${{ github.workspace }}/database/newman.sqlite php artisan serve --host=127.0.0.1 --port=8000 > /tmp/laravel.log 2>&1 &
 
       - name: Wait for Laravel to be ready
         run: |
