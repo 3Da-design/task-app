@@ -29,7 +29,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Generate Key
-        run: php artisan key:generate
+        run: php artisan key:generate --env=testing
 
       - name: Run migrations
         run: php artisan migrate --env=testing
