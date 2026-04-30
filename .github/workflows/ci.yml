@@ -48,5 +48,18 @@ jobs:
       - name: Install Newman
         run: npm install -g newman
 
+      - name: Start Laravel server
+        run: php artisan serve --host=127.0.0.1 --port=8000 > /tmp/laravel.log 2>&1 &
+
+      - name: Wait for Laravel to be ready
+        run: |
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:8000/api/tasks && exit 0
+            sleep 1
+          done
+          echo "Laravel server did not start in time"
+          cat /tmp/laravel.log
+          exit 1
+
       - name: Run Postman tests
         run: newman run postman_collections.json
