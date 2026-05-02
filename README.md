@@ -1,59 +1,85 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# task-app
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+シンプルな**タスク管理 API** を提供する Web アプリです。バックエンドは [Laravel](https://laravel.com)、フロントのビルドには Vite と Tailwind CSS を使っています。
 
-## About Laravel
+## 技術スタック
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| 領域 | 内容 |
+|------|------|
+| バックエンド | PHP（Composer）、Laravel |
+| フロント（アセット） | Vite、Tailwind CSS 4 |
+| データベース | SQLite など（`.env` で指定） |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## できること
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **タスク**は `title`（文字列）を持ち、データベースに保存されます。
+- **REST API**（`routes/api.php`）:
+  - `GET /api/tasks` … タスク一覧
+  - `POST /api/tasks` … タスク作成（JSON で `title` を送信）。成功時は **201** と作成されたレコードを返します。
+- **トップページ** `GET /` … ウェルカム画面
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## セットアップ（例）
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+フロントの開発サーバー（別ターミナル）:
 
-## Contributing
+```bash
+npm install
+npm run dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+API を試すときは `php artisan serve` でアプリを起動し、`http://127.0.0.1:8000/api/tasks` などにリクエストします。
 
-## Code of Conduct
+## テストについて
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+このリポジトリでは、**静的解析**・**PHPUnit**・**実サーバー + Newman** の3種類で品質を確認しています。
 
-## Security Vulnerabilities
+### PHPUnit（`php artisan test`）
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| 種別 | 内容 |
+|------|------|
+| Feature | `GET /api/tasks` が 200、`POST /api/tasks` が 201、トップ `GET /` が 200 など |
+| Unit | サンプルのユニットテスト |
 
-## License
+テスト実行時は `phpunit.xml` の設定により、DB は **SQLite（メモリ）** を使う想定です。
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# task-app
+### PHPStan（Larastan）
+
+`app/` を **レベル 5** で解析します。
+
+```bash
+./vendor/bin/phpstan analyse
+```
+
+### Newman（Postman コレクション）
+
+`postman_collections.json` を **Newman** で実行し、起動中の Laravel に対して API のステータスコードを確認します（例: `GET` で 200、`POST` で 201）。
+
+CI と同様に試す場合は、DB を用意してマイグレートしたうえで `php artisan serve` を起動し、別ターミナルで次を実行します。
+
+```bash
+npm install -g newman
+newman run postman_collections.json
+```
+
+（コレクション内の URL は `127.0.0.1:8000` 前提です。）
+
+### GitHub Actions（CI）
+
+`main` ブランチへの **push** で [`.github/workflows/ci.yml`](.github/workflows/ci.yml) が動き、おおまかに次の順です。
+
+1. Composer で依存関係をインストール  
+2. `.env` 準備と `testing` 環境向けのマイグレーション  
+3. **PHPStan** 実行  
+4. **PHPUnit**（`php artisan test`）  
+5. 別 SQLite ファイルでマイグレート → **`php artisan serve`** → **Newman** で `postman_collections.json` を実行  
+
+## ライセンス
+
+MIT License
