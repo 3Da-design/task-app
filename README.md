@@ -1,5 +1,7 @@
 # task-app
 
+## アプリの概要
+
 シンプルな**タスク管理 API** を提供する Web アプリです。バックエンドは [Laravel](https://laravel.com)、フロントのビルドには Vite と Tailwind CSS を使っています。
 
 ## 技術スタック
