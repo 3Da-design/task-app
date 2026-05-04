@@ -16,7 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -47,6 +46,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Install Newman
         run: npm install -g newman
