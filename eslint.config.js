@@ -28,4 +28,10 @@ export default [
             globals: globals.node,
         },
     },
+    {
+        files: ['resources/js/**/*.js', 'vite.config.js', 'eslint.config.js'],
+        rules: {
+            eqeqeq: ['error', 'always'],
+        },
+    },
 ];
