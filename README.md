@@ -40,47 +40,30 @@ API を試すときは `php artisan serve` でアプリを起動し、`http://12
 
 ## テストについて
 
-このリポジトリでは、**静的解析**・**PHPUnit**・**実サーバー + Newman** の3種類で品質を確認しています。
+品質チェックは次の **4 種類** です。
 
-### PHPUnit（`php artisan test`）
+| 種類 | 何をするか |
+|------|------------|
+| **PHPStan（Larastan）** | `app/` の静的解析（レベル 5） |
+| **PHPUnit** | `php artisan test` — タスク API とトップページの Feature、サンプル Unit |
+| **ESLint** | `npm run lint` — `resources/js` や Vite / ESLint 設定の JS |
+| **Newman** | `postman_collections.json` — 起動中サーバーへ実 HTTP で GET/POST を検証 |
 
-| 種別 | 内容 |
-|------|------|
-| Feature | `GET /api/tasks` が 200、`POST /api/tasks` が 201、トップ `GET /` が 200 など |
-| Unit | サンプルのユニットテスト |
+**詳細**（対象ファイル、テストケース名、`phpunit.xml` の環境、ESLint の無視パスとルール、CI のステップ順、ローカル再現例）は **[TESTING.md](TESTING.md)** にまとめています。
 
-テスト実行時は `phpunit.xml` の設定により、DB は **SQLite（メモリ）** を使う想定です。
-
-### PHPStan（Larastan）
-
-`app/` を **レベル 5** で解析します。
+### よく使うコマンド
 
 ```bash
-./vendor/bin/phpstan analyse
+./vendor/bin/phpstan analyse   # PHP 静的解析
+php artisan test               # PHPUnit
+npm run lint                   # ESLint（先に npm install / npm ci）
 ```
 
-### Newman（Postman コレクション）
-
-`postman_collections.json` を **Newman** で実行し、起動中の Laravel に対して API のステータスコードを確認します（例: `GET` で 200、`POST` で 201）。
-
-CI と同様に試す場合は、DB を用意してマイグレートしたうえで `php artisan serve` を起動し、別ターミナルで次を実行します。
-
-```bash
-npm install -g newman
-newman run postman_collections.json
-```
-
-（コレクション内の URL は `127.0.0.1:8000` 前提です。）
+Newman はサーバー起動後に `newman run postman_collections.json`（手順は [TESTING.md の Newman 節](TESTING.md#newman)）。
 
 ### GitHub Actions（CI）
 
-`main` ブランチへの **push** で [`.github/workflows/ci.yml`](.github/workflows/ci.yml) が動き、おおまかに次の順です。
-
-1. Composer で依存関係をインストール  
-2. `.env` 準備と `testing` 環境向けのマイグレーション  
-3. **PHPStan** 実行  
-4. **PHPUnit**（`php artisan test`）  
-5. 別 SQLite ファイルでマイグレート → **`php artisan serve`** → **Newman** で `postman_collections.json` を実行  
+`main` ブランチへの **push** で [`.github/workflows/ci.yml`](.github/workflows/ci.yml) が動きます。おおまかな順序は **PHPStan → PHPUnit → `npm ci` → ESLint → Newman（専用 SQLite + `artisan serve`）** です。ステップ単位の説明は [TESTING.md の CI 節](TESTING.md#github-actions) を参照してください。
 
 ## ライセンス
 
